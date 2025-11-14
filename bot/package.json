@@ -1,1 +1,23 @@
-
+{
+  "name": "telegram-file-share-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for sharing files with preview",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "file-sharing"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.64.0",
+    "axios": "^1.6.0"
+  }
+}
