@@ -1,9 +1,6 @@
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');
-const fs = require('fs').promises;
-const path = require('path');
 const crypto = require('crypto');
-const { execSync } = require('child_process');
 
 // Конфигурация
 const BOT_TOKEN = '8269773878:AAEN3q-1CWMsKb1cfBhW-HTPI_9iSjOj-DI';
@@ -117,7 +114,7 @@ bot.on('photo', async (msg) => {
     const fileData = await downloadTelegramFile(session.fileId);
     const photoData = await downloadTelegramFile(session.photoId);
     
-    // Создаем папку
+    // Загружаем на GitHub
     await bot.editMessageText(
       '⏳ *Обрабатываю...*\n\n' +
       '✅ Скачиваю файлы\n' +
@@ -126,27 +123,7 @@ bot.on('photo', async (msg) => {
       { chat_id: chatId, message_id: processingMsg.message_id, parse_mode: 'Markdown' }
     );
     
-    const userFolder = path.join(__dirname, '..', 'public', 'u', session.uniqueId);
-    await fs.mkdir(userFolder, { recursive: true });
-    
-    // Сохраняем файлы
-    await fs.writeFile(path.join(userFolder, session.fileName), fileData);
-    await fs.writeFile(path.join(userFolder, 'photo.jpg'), photoData);
-    
-    // Создаем HTML
-    const html = generateHTML(session);
-    await fs.writeFile(path.join(userFolder, 'index.html'), html);
-    
-    // Git push
-    await bot.editMessageText(
-      '⏳ *Обрабатываю...*\n\n' +
-      '✅ Скачиваю файлы\n' +
-      '✅ Создаю страницу\n' +
-      '✅ Загружаю на сервер',
-      { chat_id: chatId, message_id: processingMsg.message_id, parse_mode: 'Markdown' }
-    );
-    
-    await gitPush(session.uniqueId);
+    await uploadUserFiles(session, fileData, photoData);
     
     // Готово!
     const userUrl = `${SITE_URL}/u/${session.uniqueId}/`;
@@ -417,31 +394,42 @@ function generateHTML(session) {
 </html>`;
 }
 
-// Git push
-async function gitPush(uniqueId) {
+// Загрузка файлов через GitHub API
+async function uploadToGitHub(uniqueId, fileName, fileContent) {
+  const filePath = `public/u/${uniqueId}/${fileName}`;
+  const url = `https://api.github.com/repos/${GITHUB_REPO}/contents/${filePath}`;
+  
+  const base64Content = Buffer.from(fileContent).toString('base64');
+  
   try {
-    const repoPath = path.join(__dirname, '..');
+    await axios.put(url, {
+      message: `Add ${fileName} for user ${uniqueId}`,
+      content: base64Content,
+      branch: 'main'
+    }, {
+      headers: {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json'
+      }
+    });
     
-    // Настройка Git
-    execSync(`git config user.name "Bot"`, { cwd: repoPath });
-    execSync(`git config user.email "bot@telegram.com"`, { cwd: repoPath });
-    
-    // Добавляем файлы
-    execSync(`git add public/u/${uniqueId}/`, { cwd: repoPath });
-    
-    // Коммит
-    execSync(`git commit -m "Add user ${uniqueId}"`, { cwd: repoPath });
-    
-    // Push с токеном
-    const remoteUrl = `https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git`;
-    execSync(`git remote set-url origin ${remoteUrl}`, { cwd: repoPath });
-    execSync(`git push origin main`, { cwd: repoPath });
-    
-    console.log(`✅ Pushed user ${uniqueId} to GitHub`);
+    console.log(`✅ Uploaded ${fileName} for user ${uniqueId}`);
   } catch (error) {
-    console.error('Git push error:', error.message);
+    console.error(`Error uploading ${fileName}:`, error.response?.data || error.message);
     throw error;
   }
+}
+
+// Загрузка всех файлов пользователя
+async function uploadUserFiles(session, fileData, photoData) {
+  const html = generateHTML(session);
+  
+  // Загружаем файлы по очереди
+  await uploadToGitHub(session.uniqueId, session.fileName, fileData);
+  await uploadToGitHub(session.uniqueId, 'photo.jpg', photoData);
+  await uploadToGitHub(session.uniqueId, 'index.html', Buffer.from(html, 'utf-8'));
+  
+  console.log(`✅ All files uploaded for user ${session.uniqueId}`);
 }
 
 console.log('🤖 Бот запущен!');
